@@ -12,6 +12,7 @@ const (
 	WrapperTypeAliCloudKms     WrapperType = "alicloudkms"
 	WrapperTypeAwsKms          WrapperType = "awskms"
 	WrapperTypeAzureKeyVault   WrapperType = "azurekeyvault"
+    WrapperTypeFortanixDsm     WrapperType = "fortanixdsm"
 	WrapperTypeGcpCkms         WrapperType = "gcpckms"
 	WrapperTypeHsmAuto         WrapperType = "hsm-auto"
 	WrapperTypeHuaweiCloudKms  WrapperType = "huaweicloudkms"
