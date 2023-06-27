@@ -1,11 +1,10 @@
 package fortanixdsm
 
-import ( 
-    "strconv"
+import (
 	"github.com/hashicorp/go-hclog"
 	wrapping "github.com/hashicorp/go-kms-wrapping/v2"
+	"strconv"
 )
-
 
 // options = how options are represented
 type options struct {
@@ -16,10 +15,9 @@ type options struct {
 	withApikey          string
 	withKeyId           string
 	withKeyName         string
-    withEndpoint        string
-	withLogger hclog.Logger
+	withEndpoint        string
+	withLogger          hclog.Logger
 }
-
 
 func getDefaultOptions() options {
 	return options{}
@@ -27,7 +25,6 @@ func getDefaultOptions() options {
 
 // OptionFunc holds a function with local options
 type OptionFunc func(*options) error
-
 
 // getOpts iterates the inbound Options and returns a struct
 func getOpts(opt ...wrapping.Option) (*options, error) {
@@ -122,6 +119,7 @@ func withKeyId(with string) wrapping.Option {
 		})
 	}
 }
+
 // WithKeyName provides a way to chose the client ID
 func withKeyName(with string) wrapping.Option {
 	return func() interface{} {
@@ -131,5 +129,3 @@ func withKeyName(with string) wrapping.Option {
 		})
 	}
 }
-
-

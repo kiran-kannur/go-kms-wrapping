@@ -14,25 +14,24 @@ import (
 )
 
 const (
-    EnvFortanixDsmKeyId = "FORTANIX_KEY_ID"
+	EnvFortanixDsmKeyId = "FORTANIX_KEY_ID"
 )
 
 const (
-    FortanixDsmEncrypt = iota
-    FortanixDsmEnvelopeEncrypt
+	FortanixDsmEncrypt = iota
+	FortanixDsmEnvelopeEncrypt
 )
 
-
 type Wrapper struct {
-    apiKey          string
-    keyId           string
-    endpoint        string
-    keyName         string
-    client          *sdkmsClient
+	apiKey   string
+	keyId    string
+	endpoint string
+	keyName  string
+	client   *sdkmsClient
 
-	currentKeyId    *atomic.Value
+	currentKeyId *atomic.Value
 
-    logger          hclog.Logger
+	logger hclog.Logger
 }
 
 var _ wrapping.Wrapper = (*Wrapper)(nil)
@@ -45,7 +44,6 @@ func NewWrapper() *Wrapper {
 	v.currentKeyId.Store("")
 	return v
 }
-
 
 // Type returns the wrapping type for this particular Wrapper implementation
 func (k *Wrapper) Type(_ context.Context) (wrapping.WrapperType, error) {
@@ -99,19 +97,19 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 			return nil, fmt.Errorf("error initializing Fortaix DSM client: %w", err)
 		}
 
-        var sobjDescriptor sdkms.SobjectDescriptor
-        // Test the client connection using provided key ID
-        sobjDescriptor = sdkms.SobjectDescriptor{
-            Name: &v.keyName,
-        }
+		var sobjDescriptor sdkms.SobjectDescriptor
+		// Test the client connection using provided key ID
+		sobjDescriptor = sdkms.SobjectDescriptor{
+			Name: &v.keyName,
+		}
 
-        _, err = client.GetSobject(context.Background(),nil, sobjDescriptor)
-        if err != nil {
-            return nil, fmt.Errorf("error fetching FortanixDSM wrapper key information: %w", err)
-        }
-        v.currentKeyId.Store(v.keyId)
-        v.client = client
-    }
+		_, err = client.GetSobject(context.Background(), nil, sobjDescriptor)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching FortanixDSM wrapper key information: %w", err)
+		}
+		v.currentKeyId.Store(v.keyId)
+		v.client = client
+	}
 
 	// Map that holds non-sensitive configuration info
 	wrapConfig := new(wrapping.WrapperConfig)
@@ -123,11 +121,11 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 	return wrapConfig, nil
 }
 
-func (v *Wrapper) Encrypt(ctx context.Context, plaintext []byte, opt ...wrapping.Option) (*wrapping.BlobInfo, error){
-    if plaintext == nil {
-        return nil, errors.New("given plaintext for encryption is nil")
-    }
-    env, err := wrapping.EnvelopeEncrypt(plaintext, opt...)
+func (v *Wrapper) Encrypt(ctx context.Context, plaintext []byte, opt ...wrapping.Option) (*wrapping.BlobInfo, error) {
+	if plaintext == nil {
+		return nil, errors.New("given plaintext for encryption is nil")
+	}
+	env, err := wrapping.EnvelopeEncrypt(plaintext, opt...)
 
 	if err != nil {
 		return nil, fmt.Errorf("error wrapping data: %w", err)
@@ -137,72 +135,74 @@ func (v *Wrapper) Encrypt(ctx context.Context, plaintext []byte, opt ...wrapping
 		return nil, fmt.Errorf("nil client")
 	}
 
-    contxt := context.Background()
-    sobjDescriptor := sdkms.SobjectDescriptor{
-        Name: &v.keyName,
-    }
-    encryptReq := sdkms.EncryptRequest{
-        Plain: env.Key,
-        Alg: sdkms.AlgorithmRsa,
-        Key: &sobjDescriptor,
-        Mode: sdkms.CryptModeRSA(sdkms.RsaEncryptionPaddingOAEPMGF1(sdkms.DigestAlgorithmSha256)),
-    }
+	contxt := context.Background()
+	sobjDescriptor := sdkms.SobjectDescriptor{
+		Name: &v.keyName,
+	}
+	encryptReq := sdkms.EncryptRequest{
+		Plain: env.Key,
+		Alg:   sdkms.AlgorithmRsa,
+		Key:   &sobjDescriptor,
+		Mode:  sdkms.CryptModeRSA(sdkms.RsaEncryptionPaddingOAEPMGF1(sdkms.DigestAlgorithmSha256)),
+	}
 
-    encryptResp, err := v.client.Encrypt(contxt, encryptReq)
+	encryptResp, err := v.client.Encrypt(contxt, encryptReq)
 	if err != nil {
 		return nil, err
 	}
 
-    ret := &wrapping.BlobInfo{
-        Ciphertext: env.Ciphertext,
-        Iv: env.Iv,
-        KeyInfo: &wrapping.KeyInfo{
-            Mechanism: FortanixDsmEnvelopeEncrypt,
-            WrappedKey: encryptResp.Cipher,
-        },
-    } 
-    return ret, nil
+	ret := &wrapping.BlobInfo{
+		Ciphertext: env.Ciphertext,
+		Iv:         env.Iv,
+		KeyInfo: &wrapping.KeyInfo{
+			Mechanism:  FortanixDsmEnvelopeEncrypt,
+			WrappedKey: encryptResp.Cipher,
+		},
+	}
+	return ret, nil
 }
 
-func (v *Wrapper) Decrypt(ctx context.Context, in *wrapping.BlobInfo, opt ...wrapping.Option) ([]byte, error){
-    if in == nil {
-        return nil, errors.New("given input for decryption is nil")
-    }
+func (v *Wrapper) Decrypt(ctx context.Context, in *wrapping.BlobInfo, opt ...wrapping.Option) ([]byte, error) {
+	if in == nil {
+		return nil, errors.New("given input for decryption is nil")
+	}
 
-    if in.KeyInfo == nil {
-        return nil, errors.New("Key info is nil")
-    }
+	if in.KeyInfo == nil {
+		return nil, errors.New("Key info is nil")
+	}
 
-    contxt := context.Background()
-    sobjDescriptor := sdkms.SobjectDescriptor{
-        Name: &v.keyName,
-    }
-    decryptReq := sdkms.DecryptRequest{
-        Cipher: in.KeyInfo.WrappedKey,
-        Key: &sobjDescriptor,
-        Mode: sdkms.CryptModeRSA(sdkms.RsaEncryptionPaddingOAEPMGF1(sdkms.DigestAlgorithmSha256)),
-    }
-    decryptResp, err := v.client.Decrypt(contxt, decryptReq)
+	contxt := context.Background()
+	sobjDescriptor := sdkms.SobjectDescriptor{
+		Name: &v.keyName,
+	}
+	decryptReq := sdkms.DecryptRequest{
+		Cipher: in.KeyInfo.WrappedKey,
+		Key:    &sobjDescriptor,
+		Mode:   sdkms.CryptModeRSA(sdkms.RsaEncryptionPaddingOAEPMGF1(sdkms.DigestAlgorithmSha256)),
+	}
+	decryptResp, err := v.client.Decrypt(contxt, decryptReq)
 	if err != nil {
 		return nil, err
 	}
 
-    envInfo := &wrapping.EnvelopeInfo{
-        Key: decryptResp.Plain,
-        Iv: in.Iv,
-        Ciphertext: in.Ciphertext,
-    }
+	envInfo := &wrapping.EnvelopeInfo{
+		Key:        decryptResp.Plain,
+		Iv:         in.Iv,
+		Ciphertext: in.Ciphertext,
+	}
 	return wrapping.EnvelopeDecrypt(envInfo, opt...)
 
 }
+
 type sdkmsClient struct {
 	*sdkms.Client
 }
+
 func (v *Wrapper) getDsmClient() (*sdkmsClient, error) {
-    return &sdkmsClient{
-        &sdkms.Client{
-        HTTPClient: http.DefaultClient,
-        Auth: sdkms.APIKey(v.apiKey),
-        Endpoint: v.endpoint,
-    }}, nil
+	return &sdkmsClient{
+		&sdkms.Client{
+			HTTPClient: http.DefaultClient,
+			Auth:       sdkms.APIKey(v.apiKey),
+			Endpoint:   v.endpoint,
+		}}, nil
 }
