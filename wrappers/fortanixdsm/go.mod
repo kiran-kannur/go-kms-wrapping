@@ -1,4 +1,4 @@
-module github.com/shreyas197/go-kms-wrapping/wrappers/fortanixdsm/v2
+module github.com/shreyasg197/go-kms-wrapping/wrappers/fortanixdsm/v2
 
 go 1.20
 
