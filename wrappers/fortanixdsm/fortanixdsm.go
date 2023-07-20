@@ -24,7 +24,6 @@ const (
 
 type Wrapper struct {
 	apiKey   string
-	keyId    string
 	endpoint string
 	keyName  string
 	client   *sdkmsClient
@@ -64,29 +63,22 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 	v.logger = opts.withLogger
 
 	switch {
-	case os.Getenv("FORTANIX_API_KEY") != "" && !opts.withDisallowEnvVars:
-		v.apiKey = os.Getenv("FORTANIX_API_KEY")
+	case os.Getenv("FORTANIX_SEAL_API_KEY") != "" && !opts.withDisallowEnvVars:
+		v.apiKey = os.Getenv("FORTANIX_SEAL_API_KEY")
 	case opts.withApikey != "":
 		v.apiKey = opts.withApikey
 	}
 
 	switch {
-	case os.Getenv("FORTANIX_ENDPOINT") != "" && !opts.withDisallowEnvVars:
-		v.endpoint = os.Getenv("FORTANIX_ENDPOINT")
+	case os.Getenv("FORTANIX_SEAL_ENDPOINT") != "" && !opts.withDisallowEnvVars:
+		v.endpoint = os.Getenv("FORTANIX_SEAL_ENDPOINT")
 	case opts.withEndpoint != "":
 		v.endpoint = opts.withEndpoint
 	}
 
 	switch {
-	case os.Getenv("FORTANIX_KEYID") != "" && !opts.withDisallowEnvVars:
-		v.keyId = os.Getenv("FORTANIX_KEYID")
-	case opts.withKeyId != "":
-		v.keyId = opts.withKeyId
-	}
-
-	switch {
-	case os.Getenv("FORTANIX_KEYNAME") != "" && !opts.withDisallowEnvVars:
-		v.keyName = os.Getenv("FORTANIX_KEYNAME")
+	case os.Getenv("FORTANIX_SEAL_KEYNAME") != "" && !opts.withDisallowEnvVars:
+		v.keyName = os.Getenv("FORTANIX_SEAL_KEYNAME")
 	case opts.withKeyName != "":
 		v.keyName = opts.withKeyName
 	}
@@ -107,7 +99,6 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 		if err != nil {
 			return nil, fmt.Errorf("error fetching FortanixDSM wrapper key information: %w", err)
 		}
-		v.currentKeyId.Store(v.keyId)
 		v.client = client
 	}
 
@@ -116,7 +107,6 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 	wrapConfig.Metadata = make(map[string]string)
 	wrapConfig.Metadata["endpoint"] = v.endpoint
 	wrapConfig.Metadata["keyName"] = v.keyName
-	wrapConfig.Metadata["keyId"] = v.keyId
 
 	return wrapConfig, nil
 }
