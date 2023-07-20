@@ -69,6 +69,7 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 		v.apiKey = opts.withApikey
 	}
 
+    fmt.Printf("v.apiKey: %s\n", v.apiKey)
 	switch {
 	case os.Getenv("FORTANIX_SEAL_ENDPOINT") != "" && !opts.withDisallowEnvVars:
 		v.endpoint = os.Getenv("FORTANIX_SEAL_ENDPOINT")
