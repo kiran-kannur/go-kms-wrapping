@@ -75,13 +75,11 @@ func getOpts(opt ...wrapping.Option) (*options, error) {
 					return nil, err
 				}
 				opts.withKeyNotRequired = keyNotRequired
-			case "apiKey":
+			case "apikey":
 				opts.withApikey = v
-			case "keyId":
-				opts.withKeyId = v
 			case "endpoint":
 				opts.withEndpoint = v
-			case "keyName":
+			case "keyname":
 				opts.withKeyName = v
 			}
 		}

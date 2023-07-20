@@ -13,9 +13,6 @@ import (
 	wrapping "github.com/hashicorp/go-kms-wrapping/v2"
 )
 
-const (
-	EnvFortanixDsmKeyId = "FORTANIX_KEY_ID"
-)
 
 const (
 	FortanixDsmEncrypt = iota
@@ -23,9 +20,9 @@ const (
 )
 
 type Wrapper struct {
-	apiKey   string
+	apikey   string
 	endpoint string
-	keyName  string
+	keyname  string
 	client   *sdkmsClient
 
 	currentKeyId *atomic.Value
@@ -64,12 +61,12 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 
 	switch {
 	case os.Getenv("FORTANIX_SEAL_API_KEY") != "" && !opts.withDisallowEnvVars:
-		v.apiKey = os.Getenv("FORTANIX_SEAL_API_KEY")
+		v.apikey = os.Getenv("FORTANIX_SEAL_API_KEY")
 	case opts.withApikey != "":
-		v.apiKey = opts.withApikey
+		v.apikey = opts.withApikey
 	}
 
-    fmt.Printf("v.apiKey: %s\n", v.apiKey)
+    fmt.Printf("v.apiKey: %s\n", v.apikey)
 	switch {
 	case os.Getenv("FORTANIX_SEAL_ENDPOINT") != "" && !opts.withDisallowEnvVars:
 		v.endpoint = os.Getenv("FORTANIX_SEAL_ENDPOINT")
@@ -79,9 +76,9 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 
 	switch {
 	case os.Getenv("FORTANIX_SEAL_KEYNAME") != "" && !opts.withDisallowEnvVars:
-		v.keyName = os.Getenv("FORTANIX_SEAL_KEYNAME")
+		v.keyname = os.Getenv("FORTANIX_SEAL_KEYNAME")
 	case opts.withKeyName != "":
-		v.keyName = opts.withKeyName
+		v.keyname = opts.withKeyName
 	}
 
 	if v.client == nil {
@@ -93,7 +90,7 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 		var sobjDescriptor sdkms.SobjectDescriptor
 		// Test the client connection using provided key ID
 		sobjDescriptor = sdkms.SobjectDescriptor{
-			Name: &v.keyName,
+			Name: &v.keyname,
 		}
 
 		_, err = client.GetSobject(context.Background(), nil, sobjDescriptor)
@@ -107,7 +104,7 @@ func (v *Wrapper) SetConfig(_ context.Context, opt ...wrapping.Option) (*wrappin
 	wrapConfig := new(wrapping.WrapperConfig)
 	wrapConfig.Metadata = make(map[string]string)
 	wrapConfig.Metadata["endpoint"] = v.endpoint
-	wrapConfig.Metadata["keyName"] = v.keyName
+	wrapConfig.Metadata["keyName"] = v.keyname
 
 	return wrapConfig, nil
 }
@@ -128,7 +125,7 @@ func (v *Wrapper) Encrypt(ctx context.Context, plaintext []byte, opt ...wrapping
 
 	contxt := context.Background()
 	sobjDescriptor := sdkms.SobjectDescriptor{
-		Name: &v.keyName,
+		Name: &v.keyname,
 	}
 	encryptReq := sdkms.EncryptRequest{
 		Plain: env.Key,
@@ -164,7 +161,7 @@ func (v *Wrapper) Decrypt(ctx context.Context, in *wrapping.BlobInfo, opt ...wra
 
 	contxt := context.Background()
 	sobjDescriptor := sdkms.SobjectDescriptor{
-		Name: &v.keyName,
+		Name: &v.keyname,
 	}
 	decryptReq := sdkms.DecryptRequest{
 		Cipher: in.KeyInfo.WrappedKey,
@@ -193,7 +190,7 @@ func (v *Wrapper) getDsmClient() (*sdkmsClient, error) {
 	return &sdkmsClient{
 		&sdkms.Client{
 			HTTPClient: http.DefaultClient,
-			Auth:       sdkms.APIKey(v.apiKey),
+			Auth:       sdkms.APIKey(v.apikey),
 			Endpoint:   v.endpoint,
 		}}, nil
 }
