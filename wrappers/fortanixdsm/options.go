@@ -108,15 +108,6 @@ func WithApiKey(with string) wrapping.Option {
 	}
 }
 
-// WithKeyId provides a way to chose the client ID
-func withKeyId(with string) wrapping.Option {
-	return func() interface{} {
-		return OptionFunc(func(o *options) error {
-			o.withKeyId = with
-			return nil
-		})
-	}
-}
 
 // WithKeyName provides a way to chose the client ID
 func withKeyName(with string) wrapping.Option {
